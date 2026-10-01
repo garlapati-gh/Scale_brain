@@ -1,0 +1,14 @@
+# ScaleScope - Operations Intelligence Platform Dependencies
+# Pinned versions for reproducible development and production deployments
+
+# Core Application
+streamlit==1.64.0
+openai==3.19.2
+pandas==3.0.6
+plotly==7.1.0
+python-dotenv==1.2.3
+
+# Testing & Code Quality
+pytest==9.1.1
+flake8==7.4.1
+

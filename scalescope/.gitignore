@@ -1,4 +1,21 @@
+# Environment secrets
 .env
+.env.local
+!.env.example
 
+# Bytecode & Caches
 __pycache__/
 *.py[cod]
+*$py.class
+.pytest_cache/
+
+# Databases & Logs
+*.db
+*.sqlite
+*.sqlite3
+logs/
+*.log
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
