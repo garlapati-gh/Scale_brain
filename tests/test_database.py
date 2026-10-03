@@ -2,7 +2,14 @@ import sqlite3
 import pandas as pd
 import pytest
 
-from database import create_database, read_frame
+from database import (
+    create_database,
+    get_filter_metadata,
+    get_kpi_summary,
+    get_project_diagnostic,
+    get_team_metrics,
+    read_frame,
+)
 
 
 class TestDatabase:
@@ -99,3 +106,49 @@ class TestDatabase:
                 """
             )
 
+    def test_get_filter_metadata(self, db_conn):
+        """Verify filter metadata options contain expected collections."""
+        meta = get_filter_metadata(db_conn)
+        assert "teams" in meta
+        assert "domains" in meta
+        assert "statuses" in meta
+        assert "projects" in meta
+        assert "All Teams" in meta["teams"]
+        assert len(meta["projects"]) == 12
+
+    def test_get_kpi_summary_unfiltered(self, db_conn):
+        """Verify default KPI summary aggregates correctly."""
+        kpi = get_kpi_summary(db_conn)
+        assert kpi["total_tasks"] == 700
+        assert kpi["completed_tasks"] > 0
+        assert 0.0 <= kpi["completion_rate_pct"] <= 100.0
+        assert kpi["active_workers"] > 0
+
+    def test_get_kpi_summary_filtered(self, db_conn):
+        """Verify KPI summary respects team and status filter conditions."""
+        kpi_team = get_kpi_summary(db_conn, team="Data Operations")
+        assert kpi_team["total_tasks"] < 700
+        assert kpi_team["total_tasks"] > 0
+
+        kpi_completed = get_kpi_summary(db_conn, status="completed")
+        assert kpi_completed["total_tasks"] == kpi_completed["completed_tasks"]
+
+    def test_get_team_metrics(self, db_conn):
+        """Verify team performance metrics aggregation."""
+        df_teams = get_team_metrics(db_conn)
+        assert isinstance(df_teams, pd.DataFrame)
+        assert "Team" in df_teams.columns
+        assert "Total Tasks" in df_teams.columns
+        assert len(df_teams) == 4
+
+    def test_get_project_diagnostic(self, db_conn):
+        """Verify project diagnostic telemetry extraction for AI insights."""
+        diag = get_project_diagnostic(db_conn, "Warehouse scene understanding")
+        assert "project" in diag
+        assert "task_metrics" in diag
+        assert diag["project"]["name"] == "Warehouse scene understanding"
+        assert diag["task_metrics"]["total"] > 0
+
+        # Non-existent project
+        empty_diag = get_project_diagnostic(db_conn, "Non-Existent Project")
+        assert empty_diag == {}
